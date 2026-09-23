@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>I Know That Quote</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+</head>
+
+<body>
+
+    <img src="favicon.png" alt="Logo" class="logo">
+
+    <div class="wrapper">
+        <h1>I KNOW THAT QUOTE</h1>
+
+        <div class="scanner">
+            <button id="scanButton">Scan QR-kode</button>
+            <div id="reader"></div>
+        </div>
+
+        <div class="container">
+            <h1>Lydafspiller</h1>
+            <div class="player">
+                <button id="playButton">
+                    <span class="play-icon">▶</span>
+
+                    <div class="waves">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </button>
+
+                <audio id="player"></audio>
+            </div>
+        </div>
+    </div>
+
+    ```html
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <script>
+        const lydfiler = {
+            kort1: "lyd/quote1.mp3",
+            kort2: "lyd/quote2.mp3",
+            kort3: "lyd/quote3.mp3",
+            kort4: "lyd/quote4.mp3",
+            kort5: "lyd/quote5.mp3",
+            kort6: "lyd/quote6.mp3",
+            kort7: "lyd/quote7.mp3",
+            kort8: "lyd/quote8.mp3",
+            kort9: "lyd/quote9.mp3",
+            kort10: "lyd/quote10.mp3",
+            kort11: "lyd/quote11.mp3",
+            kort12: "lyd/quote12.mp3",
+            kort13: "lyd/quote13.mp3",
+            kort14: "lyd/quote14.mp3",
+        };
+
+        const player = document.getElementById("player");
+        const playButton = document.getElementById("playButton");
+        const scanButton = document.getElementById("scanButton");
+        const reader = document.getElementById("reader");
+        const container = document.querySelector(".container");
+
+        // Tjek om siden allerede er åbnet med ?id=kort1
+        const pageId = new URLSearchParams(window.location.search).get("id");
+
+        if (lydfiler[pageId]) {
+            player.src = lydfiler[pageId];
+        }
+
+        // Afspil lyd når brugeren trykker på play
+        playButton.addEventListener("click", () => {
+            player.play();
+        });
+
+        let html5QrCode;
+
+        scanButton.addEventListener("click", () => {
+
+            // Skjul scan-knappen
+            scanButton.style.display = "none";
+
+            // Vis kameraet
+            reader.style.display = "block";
+
+            html5QrCode = new Html5Qrcode("reader");
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: 250
+                },
+
+                // Når QR-koden bliver fundet
+                (decodedText) => {
+
+                    html5QrCode.stop().then(() => {
+
+                        console.log("QR-kode:", decodedText);
+
+                        try {
+
+                            // Læs URL'en fra QR-koden
+                            const url = new URL(decodedText);
+
+                            // Find ?id=kort1
+                            const scannedId = url.searchParams.get("id");
+
+                            console.log("Fundet ID:", scannedId);
+
+                            // Find den tilhørende lyd
+                            if (lydfiler[scannedId]) {
+
+                                // Sæt lydfilen
+                                player.src = lydfiler[scannedId];
+                                player.load();
+
+                                // Vis afspilleren
+                                container.style.display = "block";
+
+                                // Forsøg at afspille automatisk
+                                player.play().catch(() => {
+                                    console.log(
+                                        "Automatisk afspilning blev blokeret. Tryk på play."
+                                    );
+                                });
+
+                            } else {
+
+                                alert("Denne QR-kode blev ikke genkendt.");
+
+                            }
+
+                        } catch (error) {
+
+                            console.error("Ugyldig QR-kode:", error);
+
+                            alert("QR-koden indeholder ikke en gyldig adresse.");
+
+                        }
+
+                        // Skjul kameraet
+                        reader.style.display = "none";
+
+                        // Vis scan-knappen igen
+                        scanButton.style.display = "block";
+
+                    });
+
+                },
+
+                // Ignorer kameraets scanning-fejl
+                () => { }
+
+            ).catch(err => {
+
+                console.error(err);
+
+                reader.style.display = "none";
+                scanButton.style.display = "block";
+
+                alert("Kunne ikke starte kameraet.");
+
+            });
+
+        });
+    </script>
+
+
+</body>
+
+</html>
