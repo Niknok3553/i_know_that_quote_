@@ -103,43 +103,44 @@
                 (decodedText) => {
 
                     console.log("QR fundet:", decodedText);
-                    alert("QR-koden indeholder:\n\n" + decodedText);
 
                     html5QrCode.stop().then(() => {
 
-                        // Find ?id=kort1 i QR-koden
-                        try {
+                        // Det scanneren har fundet
+                        console.log("QR-KODE:", decodedText);
 
-                            const url = new URL(decodedText);
-                            const scannedId = url.searchParams.get("id");
+                        // Find "kort1", "kort2", osv. direkte i teksten
+                        const match = decodedText.match(/id=(kort\d+)/);
 
-                            console.log("Kort:", scannedId);
+                        if (match) {
 
-                            // Find lydfilen
+                            const scannedId = match[1];
+
+                            console.log("FUNDET KORT:", scannedId);
+
                             if (lydfiler[scannedId]) {
 
+                                // Sæt den rigtige lyd
                                 player.src = lydfiler[scannedId];
                                 player.load();
 
                                 // Vis afspilleren
                                 container.style.display = "block";
 
-                                // Prøv at starte lyden
+                                // Forsøg at starte lyden
                                 player.play().catch(() => {
                                     console.log("Tryk på play for at starte lyden.");
                                 });
 
                             } else {
 
-                                alert("Jeg kunne ikke finde dette kort.");
+                                alert("Kortet findes ikke i lydlisten: " + scannedId);
 
                             }
 
-                        } catch (error) {
+                        } else {
 
-                            console.error(error);
-
-                            alert("QR-koden kunne ikke læses.");
+                            alert("Jeg kan ikke finde kortnummeret i QR-koden.\n\nQR-koden indeholder:\n" + decodedText);
 
                         }
 
