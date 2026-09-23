@@ -59,7 +59,7 @@
             kort11: "lyd/quote11.mp3",
             kort12: "lyd/quote12.mp3",
             kort13: "lyd/quote13.mp3",
-            kort14: "lyd/quote14.mp3",
+            kort14: "lyd/quote14.mp3"
         };
 
         const player = document.getElementById("player");
@@ -68,86 +68,81 @@
         const reader = document.getElementById("reader");
         const container = document.querySelector(".container");
 
-        // Tjek om siden allerede er åbnet med ?id=kort1
+        // Hvis siden er åbnet med ?id=kort1
         const pageId = new URLSearchParams(window.location.search).get("id");
 
+        // Hvis der allerede er et kort valgt
         if (lydfiler[pageId]) {
             player.src = lydfiler[pageId];
         }
 
-        // Afspil lyd når brugeren trykker på play
+        // Play-knappen
         playButton.addEventListener("click", () => {
             player.play();
         });
 
+
+        // QR-SCANNER
         let html5QrCode;
 
         scanButton.addEventListener("click", () => {
 
-            // Skjul scan-knappen
             scanButton.style.display = "none";
-
-            // Vis kameraet
             reader.style.display = "block";
 
             html5QrCode = new Html5Qrcode("reader");
 
             html5QrCode.start(
                 { facingMode: "environment" },
+
                 {
                     fps: 10,
                     qrbox: 250
                 },
 
-                // Når QR-koden bliver fundet
                 (decodedText) => {
+
+                    console.log("QR fundet:", decodedText);
 
                     html5QrCode.stop().then(() => {
 
-                        console.log("QR-kode:", decodedText);
-
+                        // Find ?id=kort1 i QR-koden
                         try {
 
-                            // Læs URL'en fra QR-koden
                             const url = new URL(decodedText);
-
-                            // Find ?id=kort1
                             const scannedId = url.searchParams.get("id");
 
-                            console.log("Fundet ID:", scannedId);
+                            console.log("Kort:", scannedId);
 
-                            // Find den tilhørende lyd
+                            // Find lydfilen
                             if (lydfiler[scannedId]) {
 
-                                // Sæt lydfilen
                                 player.src = lydfiler[scannedId];
                                 player.load();
 
                                 // Vis afspilleren
                                 container.style.display = "block";
 
-                                // Forsøg at afspille automatisk
+                                // Prøv at starte lyden
                                 player.play().catch(() => {
-                                    console.log(
-                                        "Automatisk afspilning blev blokeret. Tryk på play."
-                                    );
+                                    console.log("Tryk på play for at starte lyden.");
                                 });
 
                             } else {
 
-                                alert("Denne QR-kode blev ikke genkendt.");
+                                alert("Jeg kunne ikke finde dette kort.");
 
                             }
 
                         } catch (error) {
 
-                            console.error("Ugyldig QR-kode:", error);
+                            console.error(error);
 
-                            alert("QR-koden indeholder ikke en gyldig adresse.");
+                            alert("QR-koden kunne ikke læses.");
 
                         }
 
-                        // Skjul kameraet
+                        // Luk kameraet
                         reader.style.display = "none";
 
                         // Vis scan-knappen igen
@@ -157,22 +152,24 @@
 
                 },
 
-                // Ignorer kameraets scanning-fejl
-                () => { }
+                () => {
+                    // Ignorer scanning-fejl
+                }
 
-            ).catch(err => {
+            ).catch((error) => {
 
-                console.error(err);
+                console.error(error);
 
                 reader.style.display = "none";
                 scanButton.style.display = "block";
 
-                alert("Kunne ikke starte kameraet.");
+                alert("Kameraet kunne ikke startes.");
 
             });
 
         });
     </script>
+
 
 
 </body>
