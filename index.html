@@ -68,82 +68,110 @@
         const reader = document.getElementById("reader");
         const container = document.querySelector(".container");
 
+        // Hvis siden åbnes direkte med ?id=kort1
         const pageId = new URLSearchParams(window.location.search).get("id");
 
         if (lydfiler[pageId]) {
             player.src = lydfiler[pageId];
         }
 
+        // Play-knap
         playButton.addEventListener("click", () => {
             player.play();
         });
 
-        let html5QrCode;
+
+        // =========================
+        // QR SCANNER
+        // =========================
+
+        let html5QrCode = null;
+        let qrFound = false;
 
         scanButton.addEventListener("click", () => {
 
             scanButton.style.display = "none";
             reader.style.display = "block";
 
+            qrFound = false;
+
             html5QrCode = new Html5Qrcode("reader");
 
             html5QrCode.start(
-                { facingMode: "environment" },
+                {
+                    facingMode: "environment"
+                },
                 {
                     fps: 10,
-                    qrbox: 250
+                    qrbox: {
+                        width: 250,
+                        height: 250
+                    }
                 },
 
+                // QR-KODE FUNDET
                 (decodedText) => {
 
-                    // QR-koden er fundet
+                    // Undgå at scanne samme QR flere gange
+                    if (qrFound) return;
+
+                    qrFound = true;
+
                     console.log("QR fundet:", decodedText);
 
-                    // Find kortnummeret
-                    const match = decodedText.match(/[?&]id=(kort\d+)/);
+                    // Find ?id=kort1
+                    const match = decodedText.match(/[?&]id=(kort[0-9]+)/);
 
                     if (!match) {
+                        console.log("QR-koden har ikke et kort-id.");
+                        qrFound = false;
                         return;
                     }
 
                     const scannedId = match[1];
 
-                    // Find lydfilen
-                    if (!lydfiler[scannedId]) {
+                    console.log("Kort fundet:", scannedId);
+
+                    // Find lydfil
+                    const lyd = lydfiler[scannedId];
+
+                    if (!lyd) {
+                        console.log("Ingen lydfil til:", scannedId);
+                        qrFound = false;
                         return;
                     }
 
                     // Stop kameraet
                     html5QrCode.stop().then(() => {
 
-                        // Sæt den rigtige lyd
-                        player.src = lydfiler[scannedId];
+                        reader.style.display = "none";
+                        scanButton.style.display = "block";
+
+                        // Sæt lyd
+                        player.src = lyd;
                         player.load();
 
-                        // Skjul kameraet
-                        reader.style.display = "none";
-
-                        // Vis afspilleren
-                        container.style.display = "block";
-
                         // Afspil med det samme
-                        player.play();
+                        player.play().catch(error => {
+                            console.log("Automatisk afspilning blokeret:", error);
+                        });
 
+                    }).catch(error => {
+                        console.error("Kunne ikke stoppe kamera:", error);
                     });
 
                 },
 
-                () => {
-                    // Ignorer scanning-fejl
+                // Ignorer almindelige scanning-fejl
+                (errorMessage) => {
                 }
 
-            ).catch((error) => {
+            ).catch(error => {
 
-                console.error(error);
+                console.error("Kunne ikke starte QR-scanner:", error);
 
                 reader.style.display = "none";
                 scanButton.style.display = "block";
-
             });
 
         });
