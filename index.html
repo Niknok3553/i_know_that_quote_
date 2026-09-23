@@ -103,6 +103,7 @@
                 (decodedText) => {
 
                     console.log("QR fundet:", decodedText);
+                    alert("QR-koden indeholder:\n\n" + decodedText);
 
                     html5QrCode.stop().then(() => {
 
