@@ -68,21 +68,16 @@
         const reader = document.getElementById("reader");
         const container = document.querySelector(".container");
 
-        // Hvis siden er åbnet med ?id=kort1
         const pageId = new URLSearchParams(window.location.search).get("id");
 
-        // Hvis der allerede er et kort valgt
         if (lydfiler[pageId]) {
             player.src = lydfiler[pageId];
         }
 
-        // Play-knappen
         playButton.addEventListener("click", () => {
             player.play();
         });
 
-
-        // QR-SCANNER
         let html5QrCode;
 
         scanButton.addEventListener("click", () => {
@@ -94,7 +89,6 @@
 
             html5QrCode.start(
                 { facingMode: "environment" },
-
                 {
                     fps: 10,
                     qrbox: 250
@@ -102,53 +96,38 @@
 
                 (decodedText) => {
 
+                    // QR-koden er fundet
                     console.log("QR fundet:", decodedText);
 
+                    // Find kortnummeret
+                    const match = decodedText.match(/[?&]id=(kort\d+)/);
+
+                    if (!match) {
+                        return;
+                    }
+
+                    const scannedId = match[1];
+
+                    // Find lydfilen
+                    if (!lydfiler[scannedId]) {
+                        return;
+                    }
+
+                    // Stop kameraet
                     html5QrCode.stop().then(() => {
 
-                        // Det scanneren har fundet
-                        console.log("QR-KODE:", decodedText);
+                        // Sæt den rigtige lyd
+                        player.src = lydfiler[scannedId];
+                        player.load();
 
-                        // Find "kort1", "kort2", osv. direkte i teksten
-                        const match = decodedText.match(/id=(kort\d+)/);
-
-                        if (match) {
-
-                            const scannedId = match[1];
-
-                            console.log("FUNDET KORT:", scannedId);
-
-                            if (lydfiler[scannedId]) {
-
-                                // Sæt den rigtige lyd
-                                player.src = lydfiler[scannedId];
-                                player.load();
-
-                                // Vis afspilleren
-                                container.style.display = "block";
-
-                                // Forsøg at starte lyden
-                                player.play().catch(() => {
-                                    console.log("Tryk på play for at starte lyden.");
-                                });
-
-                            } else {
-
-                                alert("Kortet findes ikke i lydlisten: " + scannedId);
-
-                            }
-
-                        } else {
-
-                            alert("Jeg kan ikke finde kortnummeret i QR-koden.\n\nQR-koden indeholder:\n" + decodedText);
-
-                        }
-
-                        // Luk kameraet
+                        // Skjul kameraet
                         reader.style.display = "none";
 
-                        // Vis scan-knappen igen
-                        scanButton.style.display = "block";
+                        // Vis afspilleren
+                        container.style.display = "block";
+
+                        // Afspil med det samme
+                        player.play();
 
                     });
 
@@ -164,8 +143,6 @@
 
                 reader.style.display = "none";
                 scanButton.style.display = "block";
-
-                alert("Kameraet kunne ikke startes.");
 
             });
 
