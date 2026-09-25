@@ -18,7 +18,12 @@
 
         <div class="scanner">
             <button id="scanButton">Scan QR-kode</button>
-            <div id="reader"></div>
+
+            <div id="reader">
+                <button id="closeScanner" type="button">
+                    ✕ Luk scanner
+                </button>
+            </div>
         </div>
 
         <div class="container">
@@ -84,95 +89,120 @@
         // QR SCANNER
         // =========================
 
+
         let html5QrCode = null;
         let qrFound = false;
 
-        scanButton.addEventListener("click", () => {
+        const closeScanner = document.getElementById("closeScanner");
+
+        // Åbn QR-scanner
+        scanButton.addEventListener("click", async () => {
 
             scanButton.style.display = "none";
             reader.style.display = "block";
 
             qrFound = false;
 
-            html5QrCode = new Html5Qrcode("reader");
+            try {
+                html5QrCode = new Html5Qrcode("reader");
 
-            html5QrCode.start(
-                {
-                    facingMode: "environment"
-                },
-                {
-                    fps: 10,
-                    qrbox: {
-                        width: 250,
-                        height: 250
-                    }
-                },
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: (width, height) => {
+                            const size = Math.min(
+                                width * 0.75,
+                                height * 0.75,
+                                280
+                            );
 
-                // QR-KODE FUNDET
-                (decodedText) => {
+                            return {
+                                width: Math.floor(size),
+                                height: Math.floor(size)
+                            };
+                        }
+                    },
 
-                    // Undgå at scanne samme QR flere gange
-                    if (qrFound) return;
+                    // QR-KODE FUNDET
+                    async (decodedText) => {
 
-                    qrFound = true;
+                        if (qrFound) return;
 
-                    console.log("QR fundet:", decodedText);
+                        const match = decodedText.match(
+                            /[?&]id=(kort[0-9]+)/
+                        );
 
-                    // Find ?id=kort1
-                    const match = decodedText.match(/[?&]id=(kort[0-9]+)/);
+                        if (!match) {
+                            console.log("QR-koden har ikke et kort-id.");
+                            return;
+                        }
 
-                    if (!match) {
-                        console.log("QR-koden har ikke et kort-id.");
-                        qrFound = false;
-                        return;
-                    }
+                        const scannedId = match[1];
+                        const lyd = lydfiler[scannedId];
 
-                    const scannedId = match[1];
+                        if (!lyd) {
+                            console.log("Ingen lydfil til:", scannedId);
+                            return;
+                        }
 
-                    console.log("Kort fundet:", scannedId);
+                        qrFound = true;
 
-                    // Find lydfil
-                    const lyd = lydfiler[scannedId];
+                        try {
+                            await html5QrCode.stop();
+                            html5QrCode.clear();
 
-                    if (!lyd) {
-                        console.log("Ingen lydfil til:", scannedId);
-                        qrFound = false;
-                        return;
-                    }
+                            reader.style.display = "none";
+                            scanButton.style.display = "block";
 
-                    // Stop kameraet
-                    html5QrCode.stop().then(() => {
+                            player.src = lyd;
+                            player.load();
 
-                        reader.style.display = "none";
-                        scanButton.style.display = "block";
+                            player.play().catch(error => {
+                                console.log(
+                                    "Automatisk afspilning blokeret:",
+                                    error
+                                );
+                            });
 
-                        // Sæt lyd
-                        player.src = lyd;
-                        player.load();
+                        } catch (error) {
+                            console.error("Fejl ved stop af scanner:", error);
+                        }
+                    },
 
-                        // Afspil med det samme
-                        player.play().catch(error => {
-                            console.log("Automatisk afspilning blokeret:", error);
-                        });
+                    // Ignorer almindelige scanningsfejl
+                    () => { }
 
-                    }).catch(error => {
-                        console.error("Kunne ikke stoppe kamera:", error);
-                    });
+                );
 
-                },
-
-                // Ignorer almindelige scanning-fejl
-                (errorMessage) => {
-                }
-
-            ).catch(error => {
-
+            } catch (error) {
                 console.error("Kunne ikke starte QR-scanner:", error);
 
                 reader.style.display = "none";
                 scanButton.style.display = "block";
-            });
+            }
+        });
 
+        // Luk scanner manuelt
+        closeScanner.addEventListener("click", async () => {
+
+            if (html5QrCode) {
+                try {
+                    if (html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+
+                    html5QrCode.clear();
+
+                } catch (error) {
+                    console.error("Fejl ved lukning af scanner:", error);
+                }
+            }
+
+            reader.style.display = "none";
+            scanButton.style.display = "block";
+
+            qrFound = false;
         });
     </script>
 
