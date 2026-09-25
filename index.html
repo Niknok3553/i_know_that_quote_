@@ -18,12 +18,6 @@
 
         <div class="scanner">
             <button id="scanButton">Scan QR-kode</button>
-
-            <div id="reader">
-                <button id="closeScanner" type="button">
-                    ✕ Luk scanner
-                </button>
-            </div>
         </div>
 
         <div class="container">
@@ -44,6 +38,17 @@
                 <audio id="player"></audio>
             </div>
         </div>
+    </div>
+
+    <!-- FULDskærms QR-SCANNER -->
+    <div id="scannerOverlay">
+
+        <button id="closeScanner" type="button">
+            ✕ Luk scanner
+        </button>
+
+        <div id="reader"></div>
+
     </div>
 
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -70,6 +75,8 @@
         const playButton = document.getElementById("playButton");
         const scanButton = document.getElementById("scanButton");
         const reader = document.getElementById("reader");
+        const scannerOverlay = document.getElementById("scannerOverlay");
+        const closeScanner = document.getElementById("closeScanner");
         const container = document.querySelector(".container");
 
         // Hvis siden åbnes direkte med ?id=kort1
@@ -93,13 +100,12 @@
         let html5QrCode = null;
         let qrFound = false;
 
-        const closeScanner = document.getElementById("closeScanner");
-
         // Åbn QR-scanner
         scanButton.addEventListener("click", async () => {
 
-            scanButton.style.display = "none";
-            reader.style.display = "block";
+            scannerOverlay.classList.add("active");
+
+            document.body.style.overflow = "hidden";
 
             qrFound = false;
 
@@ -152,7 +158,9 @@
                             await html5QrCode.stop();
                             html5QrCode.clear();
 
-                            reader.style.display = "none";
+                            scannerOverlay.classList.remove("active");
+
+                            document.body.style.overflow = "";
                             scanButton.style.display = "block";
 
                             player.src = lyd;
@@ -178,8 +186,12 @@
             } catch (error) {
                 console.error("Kunne ikke starte QR-scanner:", error);
 
-                reader.style.display = "none";
+                scannerOverlay.classList.remove("active");
+                document.body.style.overflow = "";
+
                 scanButton.style.display = "block";
+
+                alert("Kameraet kunne ikke starte. Tjek kameraadgang og HTTPS.");
             }
         });
 
@@ -195,11 +207,14 @@
                     html5QrCode.clear();
 
                 } catch (error) {
-                    console.error("Fejl ved lukning af scanner:", error);
+                    console.error("Fejl ved lukning:", error);
                 }
             }
 
-            reader.style.display = "none";
+            scannerOverlay.classList.remove("active");
+
+            document.body.style.overflow = "";
+
             scanButton.style.display = "block";
 
             qrFound = false;
