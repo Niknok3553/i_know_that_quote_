@@ -30,6 +30,8 @@ body {
   align-items: center;
   gap: 1.5rem;
   margin-top: 70px;
+  position: absolute;
+  top: 300px;
 }
 
 .container {
@@ -40,7 +42,7 @@ body {
   text-align: center;
 }
 
-h1 {
+h2 {
   color: white;
   font-size: 3rem;
   text-align: center;
@@ -48,9 +50,11 @@ h1 {
 }
 
 .logo {
-  top: 20px;
-  left: 20px;
-  width: 200px;
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 350px;
   height: auto;
 }
 
@@ -185,6 +189,10 @@ audio {
 
 @media (min-width: 1200px) {
   .logo {
-    width: 180px;
+    width: 500px;
+  }
+  .wrapper {
+    position: absolute;
+    top: 500px;
   }
 }
